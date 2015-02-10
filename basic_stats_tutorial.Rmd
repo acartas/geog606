@@ -1,0 +1,186 @@
+---
+title: "Basic Stats Tutorial"
+author: "Team Stats"
+date: "Monday, February 09, 2015"
+output: html_document
+---
+
+### 1. Generating sample datasets
+
+For each common distribution, R provides a function to generate a random dataset.
+These function names all begin with 'r' , followed by the distribution's shortcut name.
+
+The first parameter, n, is always the size of the requested sample. After this, each
+distribution type has its own specific parameters. Type ?*funcname* to view the function's
+help file, which will give details on each parameter.
+
+Available functions include: runif, rbinom, rnorm, rexp, rf, rgamma, rgeom, rlnorm, rpois, etc.
+
+```{r}
+
+sampleUnif <- runif(100,min=1,max=100) #A vector of 100 variables between 1 and 10.
+sampleNorm <- rnorm(100, mean=50, sd=3) #A vector of 100 variables with a mean of 50 and sd of 3.
+sampleExp <- rexp(100, rate=0.05) #mean = 1/rate 
+
+#preview our data
+head(sampleUnif)
+head(sampleNorm)
+head(sampleExp)
+```
+
+We can provide some simple visualization for this. There are many options for plotting data. You will have to check out the help files to get details, or do a google search for anything you are trying to achieve. 
+
+R comes with standard functions for plotting data in formats such as lines, curves, and histograms. Separate functions and parameters will allow you to update colors, add legends, and change display style. Especially using the *par* function, you can make changes to the defaults.
+
+There is also a common library, ggplot2, which you can install to perform more elegant plotting. We won't go into that right now.
+
+```{r}
+
+hist(sampleUnif, col=rgb(0,0,1,0.5),xlim=c(0,100), ylim=c(0,40), main="Overlapping Histogram", xlab="Value")
+hist(sampleNorm, col=rgb(0,1,0,0.5), add=T)
+hist(sampleExp, col=rgb(1,0,0,0.5), add=T)
+
+legend("topright", c("Uniform","Normal","Exponential"),col=c(rgb(0,0,1,0.5),rgb(0,1,0,0.5),rgb(1,0,0,0.5)), lwd=10)
+box() #decorative box around data
+
+```
+
+### 2. Sampling from a larger population
+
+You can also grab a random sample out of a larger dataset you have imported. *sample* takes a sample of the specified size from the elements of x using either with or without replacement.
+
+You can also include a vector of weighted probabilities. These need not sum to one, but must all be non-negative with at least one non-zero.
+
+```{r}
+sample(20) #randomly select 20 objects from 1:20 (in essence 'shuffle' them)
+sample(20,5) #randomly select 5 numbers from 1:20, without replacement.
+sample(c(10:20),5,replace=TRUE) #Choose 5 from 10:20, WITH replacement.
+sample(c(1:10),5,replace=FALSE,prob=c(1,2,1,2,1,2,1,2,1,2)) #Select 5 from 1:10, where the probability of choosing an even number is twice as high.
+```
+
+Working with samples from data frames is slightly more complicated, but still easy to do.
+```{r}
+data(cars) #load an included tutorial dataset (stored in 'cars' variable by default)
+str(cars)  #provides structural information on the data. 50 obs. of 2 variables
+head(cars) #preview the data
+
+cars[sample(nrow(cars),2),] #Get a random size 2 subset of cars data frame
+```
+
+### 3. Simple descriptive statistics functions
+
+We can easily calculate min, max, mean, variance, covariance, and standard deviation.
+
+First, let's calculate the means of our sample distributions and add them to the histogram plot.
+
+```{r}
+
+meanUnif <- mean(sampleUnif)
+meanNorm <- mean(sampleNorm) 
+meanExp  <- mean(sampleExp)  
+cat("meanUnif:",meanUnif,"\nmeanNorm:",meanNorm,"\nmeanExp:",meanExp,"\n")
+```
+
+```{r, eval=FALSE}
+
+abline(v=meanUnif, col=rgb(0,0,1,0.5), lwd=3)
+abline(v=meanNorm, col=rgb(0,1,0,0.5), lwd=3)
+abline(v=meanExp, col=rgb(1,0,0,0.5), lwd=3)
+
+text(meanUnif,15, "mean(sampleUnif)", adj = c(-.1, -.1))
+text(meanNorm,30, "mean(sampleNorm)", adj = c(-.1, -.1))
+text(meanExp,20,"mean(sampleExp)", adj = c(-.1, -.1))
+
+```
+
+```{r,echo=FALSE}
+
+hist(sampleUnif, col=rgb(0,0,1,0.5),xlim=c(0,100), ylim=c(0,40), main="Overlapping Histogram", xlab="Value")
+hist(sampleNorm, col=rgb(0,1,0,0.5), add=T)
+hist(sampleExp, col=rgb(1,0,0,0.5), add=T)
+
+legend("topright", c("Uniform","Normal","Exponential"),col=c(rgb(0,0,1,0.5),rgb(0,1,0,0.5),rgb(1,0,0,0.5)), lwd=10)
+box() #decorative box around data
+
+abline(v=meanUnif, col=rgb(0,0,1,0.5), lwd=3)
+abline(v=meanNorm, col=rgb(0,1,0,0.5), lwd=3)
+abline(v=meanExp, col=rgb(1,0,0,0.5), lwd=3)
+
+text(meanUnif,15, "mean(sampleUnif)", adj = c(-.1, -.1), col="blue")
+text(meanNorm,30, "mean(sampleNorm)", adj = c(-.1, -.1), col="green")
+text(meanExp,20,"mean(sampleExp)", adj = c(-.1, -.1), col="red")
+
+```
+
+Now let's work instead with the provided tutorial dataset and calculate other statistics.
+
+```{r}
+head(cars) #Our dataset from earlier. 50 observations of 2 variables.
+
+min(cars$dist)
+max(cars$dist)
+
+mean(cars$dist)
+
+var(cars$dist)
+
+cov(cars$dist,cars$speed) #defaults to pearson method, but can also set kendall or spearman.
+cov(cars)#computes covariance of all variables in a provided dataframe or matrix.
+
+cor.test(cars$dist,cars$speed) #can also test for correlation between paired samples.
+
+sd(cars$dist)
+
+```
+
+### 4. Discrete probability functions
+
+The same distributions used to generate random data sets can be used to compute density, distribution, and quantile functions. Use the same function name shortcuts from above, but instead of 'r' append them with 'd', 'p', and 'q' respectively.
+
+For discrete probability functions, we could look at:
+
+* Binomial
+* Hypergeometric
+* Geometric
+* Poisson
+
+```{r, eval=FALSE}
+#Please replace these with meaningful values! Then, set eval=TRUE to run it.
+dbinom(x=cars$dist,size=20,prob=0.5)
+dhyper(x,m,n,k)
+dgeom(p,prob)
+dpois(p,lambda)
+
+```
+
+### 5. Continuous probability functions
+
+Continuous probability functions such as:
+
+* Normal
+* Student's t
+* Exponential
+* Gamma
+* Chi-squared
+
+```{r, eval=FALSE}
+#Please replace these with meaningful values! Then, set eval=TRUE to run it.
+dnorm(p, mean, sd)
+dt(p, df)
+dexp(p, rate)
+dgamma(p, shape, rate=rate) ; dgamma(p,shape,scale=scale)
+dchisq(p,df)
+```
+
+### 5. Pre-class survey questions
+
+If I multiply a dataset by 10, what kind of change would happen to its variance?
+
+```{r}
+
+v1 <- var(sampleUnif); v1
+v2 <- var(sampleUnif*10); v1
+
+cat("The variance is",v2/v1,"times as large.")
+
+```
