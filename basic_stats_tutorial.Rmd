@@ -2,7 +2,7 @@
 title: "Basic Stats Tutorial"
 author: "Team Stats"
 date: "Monday, February 09, 2015"
-output: html_document
+output: word_document
 ---
 
 ### 1. Generating sample datasets
@@ -183,4 +183,14 @@ v2 <- var(sampleUnif*10); v1
 
 cat("The variance is",v2/v1,"times as large.")
 
+```
+
+### 6. Learn more! Fun tutorial games!!!
+
+```{r, eval=FALSE}
+
+#install.packages(swirl)
+library(swirl)
+swirl()
+#Now follow the directions! Woo!
 ```
