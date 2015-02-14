@@ -1,0 +1,39 @@
+---
+title: "GEOG606 - HW1"
+author: "Anika Cartas"
+date: "Saturday, February 14, 2015"
+output: word_document
+---
+
+#1. Solve the following linear equations:
+
+-x + 2y = 1
+3x +  y = 3
+
+```{r}
+
+```
+
+If we add another equation, x + y = 2, is there a solution for the set of 3 equations? If not, could you give a best estimate of x and y that satisfy the equations?
+
+```{r}
+```
+
+#2. Calculate the covariance of the following 3*2 data matrix. 
+
+```{r}
+```
+
+What does the covariance tell you about the data?
+
+#3.Use the folowing dataset to demonstrate the Central Tendency Theorem.
+
+3.1. Randomly select 5 values and calculate their mean. Repeat 3 times, and calculate the mean of the sampling mean. Then, repeat 5, 10, 20, adn 50 times. Use a plot to show how the mean of the sampling mean changes as the number of repeats increases.
+
+3.2. Repeat 3.1., but select 10 values during each random selection. Explain these plots in relation to the Central Tendency Theorem.
+
+3.3. How does the sampling mean approach normal distribution in these experiments? Use histograms to show.
+
+```{r}
+data = c(3,2,3,4,3,2,5,4,5,2,3,3,10,4,5,4,12,15,10,17,15,18,16,14,9,10,11,18,17,18,16,17,18)
+```
