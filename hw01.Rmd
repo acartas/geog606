@@ -70,7 +70,7 @@ takeSamples <- function(data,sizes, sampleSize){
   allMeans #return value
 }
 
-means.5 = takeSamples(data,c(3,5,10,20,50),sampleSize=5); allMeans
+means.5 = takeSamples(data,c(3,5,10,20,50),sampleSize=5); means.5
 ```
 
 Use a plot to show how the mean of the sampling mean changes as the number of repeats increases.
@@ -108,17 +108,9 @@ mtext("A similar convergence to the previous example is noticeable.")
 hist(means.5, col=rgb(0,0,1,0.5), ylim=c(0,10), main="Distribution of Means of Means", xlab="Mean")
 hist(means.10, col=rgb(0,1,0,0.5), add=T)
 
-lines(rnorm(data),means.5,col=rgb(0,0,1,0.5))
-
 legend("topright", c("Sample(5)","Sample(10)"),col=c(rgb(0,0,1,0.5),rgb(0,1,0,0.5)), lwd=10)
 box() #decorative box around data
 mtext("Difficult to note anything with this small a set of samples.")
-
-#Repeat with samples up to size 1000 
-hist(means.5.1000, col=rgb(0,0,1,0.5), main="Distribution of Means of Means", xlab="Mean")
-hist(means.10.1000, col=rgb(0,1,0,0.5), add=T)
-legend("topright", c("Sample(5)","Sample(10)"),col=c(rgb(0,0,1,0.5),rgb(0,1,0,0.5)), lwd=10)
-box() #decorative box around data
 
 
 ```
