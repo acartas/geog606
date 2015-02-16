@@ -2,7 +2,7 @@
 title: "GEOG606 - HW1"
 author: "Anika Cartas"
 date: "Saturday, February 14, 2015"
-output: html_document
+output: word_document
 ---
 
 ####1. Solve the following linear equations:
@@ -25,7 +25,20 @@ If we add another equation, x + y = 2, is there a solution for the set of 3 equa
 
 If not, could you give a best estimate of x and y that satisfy the equations?
 
-  * **Not sure! Get help on this one!**
+  * To find a best estimate, plot all three lines and find the centerpoint of the triangle their intersections create.
+
+```{r}
+#Plot all three lines
+plot(NULL,xlim=c(0,2.5),ylim=c(0,3.5), xlab="x",ylab="y")
+abline(1/2,1/2, col="red") #first first equation
+abline(3,-3,col="green") #second equation
+abline(2,-1,col="blue") #third equation
+abline(h=1.1)
+abline(v=0.73)
+mtext("Best Estimate: x=0.7,3 y=1.1")
+
+```
+
 
 ####2. Calculate the covariance matrix of the following 3*2 data matrix:
 
@@ -91,11 +104,11 @@ mtext("With a large enough number of samples, convergence is noticeable.")
 3.2. Repeat 3.1. but select 10 values during each random selection. Explain these plots in relation to the Central Tendency Theorem.
 
 ```{r}
-means.10.1000 = takeSamples(data,seq(1,1000,10),sampleSize=5)
+means.10.1000 = takeSamples(data,seq(1,1000,10),sampleSize=10)
 
 plot(means.10.1000, main="Means of Various Samples of 10 from Dataset", col="grey", xlab="Times Sampled")
 
-means.10 = takeSamples(data,c(3,5,10,20,50),sampleSize=5)
+means.10 = takeSamples(data,c(3,5,10,20,50),sampleSize=10)
 points(means.10, col="red")
 
 mtext("A similar convergence to the previous example is noticeable.")
@@ -104,14 +117,23 @@ mtext("A similar convergence to the previous example is noticeable.")
 3.3. How does the sampling mean approach normal distribution in these experiments? Use histograms to show.
 
 ```{r}
+hist(means.5[,2], col=rgb(0,0,1,0.5), xlim=c(7,10),main="Distribution of Means of Means (Samples of 5)", xlab="Mean")
 
-hist(means.5, col=rgb(0,0,1,0.5), ylim=c(0,10), main="Distribution of Means of Means", xlab="Mean")
-hist(means.10, col=rgb(0,1,0,0.5), add=T)
+hist(means.10[,2], col=rgb(0,1,0,0.5), main="Distribution of Mean of Means (Samples of 10)", xlab="Mean", add=T)
+
+legend("topleft", c("Sample(5)","Sample(10)"),col=c(rgb(0,0,1,0.5),rgb(0,1,0,0.5)), lwd=10)
+box() #decorative box around data
+mtext("With fewer samples, hard to note anything.")
+
+
+hist(means.5.1000[,2], col=rgb(0,0,1,0.5), main="Distribution of Means of Means (Samples of 5)", xlab="Mean")
+
+hist(means.10.1000[,2], col=rgb(0,1,0,0.5), main="Distribution of Mean of Means (Samples of 10)", xlab="Mean", add=T)
 
 legend("topright", c("Sample(5)","Sample(10)"),col=c(rgb(0,0,1,0.5),rgb(0,1,0,0.5)), lwd=10)
 box() #decorative box around data
-mtext("Difficult to note anything with this small a set of samples.")
-
+mtext("With more samples, a normal curve with median 9.5 is noticeable.")
 
 ```
+
 
