@@ -19,11 +19,11 @@ solve(left,right)
 
 ```
 
-If we add another equation, x + y = 2, is there a solution for the set of 3 equations? 
+**If we add another equation, x + y = 2, is there a solution for the set of 3 equations?** 
 
   * No. We can only solve for a square matrix.
 
-If not, could you give a best estimate of x and y that satisfy the equations?
+**If not, could you give a best estimate of x and y that satisfy the equations?**
 
   * To find a best estimate, plot all three lines and find the centerpoint of the triangle their intersections create.
 
@@ -35,19 +35,47 @@ abline(3,-3,col="green") #second equation
 abline(2,-1,col="blue") #third equation
 abline(h=1.1)
 abline(v=0.73)
-mtext("Best Estimate: x=0.7,3 y=1.1")
+mtext("Rough Estimate: x=0.7,3 y=1.1")
 
 ```
 
 
 ####2. Calculate the covariance matrix of the following 3*2 data matrix:
 
+First, calculate by hand:
+
+$A =  \left( \begin{array}{cc} 1 & 3 \\ 2 & 2 \\ 3 &  1 \end{array} \right)$
+
+1. Calculate the matrix of devation scores, with n = nrows(A):
+
+$a = A - 11\cdot A/{n}$
+
+$a = \left( \begin{array}{cc} 1 & 3 \\ 2 & 2 \\ 3 &  1 \end{array} \right) - \left( \begin{array}{ccc} 1 & 1 & 1 \\ 1 & 1 & 1 \\ 1 & 1 & 1 \end{array} \right)\left( \begin{array}{cc} 1 & 3 \\ 2 & 2 \\ 3 &  1 \end{array} \right) \cdot\frac{1}{3}$
+
+$a = \left( \begin{array}{cc} 1 & 3 \\ 2 & 2 \\ 3 &  1 \end{array} \right) - \left(\begin{array}{cc} 6 & 6 \\ 6 & 6 \\ 6 & 6\end{array} \right)\cdot\frac{1}{3}$
+
+$a =  \left( \begin{array}{cc} 1 & 3 \\ 2 & 2 \\ 3 &  1 \end{array} \right) - \left(\begin{array}{cc} 2 & 2 \\ 2 & 2 \\ 2 & 2\end{array} \right)$
+
+$a = \left( \begin{array}{cc} -1 & 1 \\ 0 & 0 \\ 1 & -1 \end{array}\right)$
+
+2. Calculate the covariance matrix, with n = nrows(a):
+
+$V = a^T\cdot a/n$
+
+$V = \left( \begin{array}{ccc} -1 & 0 & 1 \\ 1 & 0 & -1 \end{array} \right) \cdot \left( \begin{array}{cc} -1 & 1 \\ 0 & 0 \\ 1 & -1 \end{array}\right) \cdot \frac{1}{2}$
+
+$V = \left( \begin{array}{cc} 2 & -2 \\ -2 & 2\end{array} \right) \cdot \frac{1}{2}$
+
+$V = \left( \begin{array}{cc} 1 & -1 \\ -1 & 1\end{array} \right)$
+
+Now, calculate using R. So much easier!
+
 ```{r}
 x = matrix(c(1,2,3,3,2,1),3,2); x
 cov(x)
 ```
 
-What does the covariance tell you about the data?
+**What does the covariance tell you about the data?**
 
  * The covariance matrix shows the variances of the two variables (x,y) along the diagonal, and the covariances between them in the other positions.
 
@@ -59,16 +87,17 @@ What does the covariance tell you about the data?
 data = c(3,2,3,4,3,2,5,4,5,2,3,3,10,4,5,4,12,15,10,17,15,18,16,14,9,10,11,18,17,18,16,17,18)
 ```
 
-3.1. Randomly select 5 values and calculate their mean. 
+**3.1. Randomly select 5 values and calculate their mean. **
 
 ```{r}
 s1 = sample(data,5); s1
 mean(s1)
 ```
 
-Repeat 3 times, and calculate the mean of the sampling mean. Then, repeat 5, 10, 20, and 50 times. 
+**Repeat 3 times, and calculate the mean of the sampling mean. Then, repeat 5, 10, 20, and 50 times.** 
 
 ```{r}
+#Calculate the mean of 'size' samples of 'sampleSize' from data, repeating for each size given in sizes. Return a formatted matrix of these means.
 takeSamples <- function(data,sizes, sampleSize){
   allMeans = matrix(NA,1,2)
   for (n in sizes){
@@ -82,17 +111,21 @@ takeSamples <- function(data,sizes, sampleSize){
   colnames(allMeans) = c("Times.Sampled","Mean")  
   allMeans #return value
 }
+```
 
+Requested means from 3,5,10,20, and 50 repetitions of sampling of size 5.
+
+```{r}
 means.5 = takeSamples(data,c(3,5,10,20,50),sampleSize=5); means.5
 ```
 
-Use a plot to show how the mean of the sampling mean changes as the number of repeats increases.
+**Use a plot to show how the mean of the sampling mean changes as the number of repeats increases.**
 
 ```{r}
 
 #Out of curiosity, plotting larger sizes of samples (first, so that axes match up)
-means.5.1000 = takeSamples(data,seq(1,1000,5),sampleSize=5)
-plot(means.5.1000, main="Means of Various Samples of 5 from Dataset", col="grey", xlab="Times Sampled")
+means.5.500 = takeSamples(data,seq(1,500,5),sampleSize=5)
+plot(means.5.500, main="Means of Various Samples of 5 from Dataset", col="grey", xlab="Times Sampled", ylim=c(8,11))
 
 #Request from assignment in red
 points(means.5,col="red")
@@ -101,39 +134,38 @@ mtext("With a large enough number of samples, convergence is noticeable.")
 
 ```
 
-3.2. Repeat 3.1. but select 10 values during each random selection. Explain these plots in relation to the Central Tendency Theorem.
+**3.2. Repeat 3.1. but select 10 values during each random selection. Explain these plots in relation to the Central Tendency Theorem.**
 
 ```{r}
-means.10.1000 = takeSamples(data,seq(1,1000,10),sampleSize=10)
+means.10.500 = takeSamples(data,seq(1,500,5),sampleSize=10)
 
-plot(means.10.1000, main="Means of Various Samples of 10 from Dataset", col="grey", xlab="Times Sampled")
+plot(means.10.500, main="Means of Various Samples of 10 from Dataset", col="grey", xlab="Times Sampled", ylim=c(8,11))
 
+#Request from assignment in red
 means.10 = takeSamples(data,c(3,5,10,20,50),sampleSize=10)
 points(means.10, col="red")
 
 mtext("A similar convergence to the previous example is noticeable.")
 ```
 
-3.3. How does the sampling mean approach normal distribution in these experiments? Use histograms to show.
+**3.3. How does the sampling mean approach normal distribution in these experiments? Use histograms to show.**
 
 ```{r}
-hist(means.5[,2], col=rgb(0,0,1,0.5), xlim=c(7,11),main="Distribution of Means of Means (Samples of 5)", xlab="Mean")
+hist(means.5[,2], col=rgb(0,0,1,0.5), xlim=c(7,11),main="Distribution of Means of Means", xlab="Mean")
 
-hist(means.10[,2], col=rgb(1,0,0,0.5), main="Distribution of Mean of Means (Samples of 10)", xlab="Mean", add=T)
+hist(means.10[,2], col=rgb(0,1,0,0.5), xlab="Mean", add=T)
 
-legend("topleft", c("Sample(5)","Sample(10)"),col=c(rgb(0,0,1,0.5),rgb(1,0,0,0.5)), lwd=10)
+legend("topleft", c("Sample(5)","Sample(10)"),col=c(rgb(0,0,1,0.5),rgb(0,1,0,0.5)), lwd=10)
 box() #decorative box around data
-mtext("With fewer samples, hard to note anything.")
+mtext("With fewer samples, hard to note anything.",line=0.5)
 
 
-hist(means.5.1000[,2], col=rgb(0,0,1,0.5), main="Distribution of Means of Means (Samples of 5)", xlab="Mean")
+hist(means.10.500[,2], col=rgb(0,0,1,0.5), main="Distribution of Means of Means", xlab="Mean")
 
-hist(means.10.1000[,2], col=rgb(1,0,0,0.5), main="Distribution of Mean of Means (Samples of 10)", xlab="Mean", add=T)
+hist(means.5.500[,2], col=rgb(0,1,0,0.5), xlab="Mean", add=T)
 
-legend("topright", c("Sample(5)","Sample(10)"),col=c(rgb(0,0,1,0.5),rgb(1,0,0,0.5)), lwd=10)
+legend("topright", c("Sample(5)","Sample(10)"),col=c(rgb(0,0,1,0.5),rgb(0,1,0,0.5)), lwd=10)
 box() #decorative box around data
-mtext("With more samples, a normal curve with median 9.5 is noticeable.")
+mtext("With more samples, a normal curve with median 9.5 is noticeable.",line=0.5)
 
 ```
-
-
