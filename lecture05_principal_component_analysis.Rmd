@@ -1,0 +1,28 @@
+---
+title: "Lecture 05: Principal Component Analysis"
+author: "Anika Cartas"
+date: "Wednesday, February 25, 2015"
+output: html_document
+---
+
+###Lecture 05: Principla Component Analysis
+
+Source: [Penn State STAT505: Applied Multivariate Statistical Analysis](https://onlinecourses.science.psu.edu/stat505/node/49)
+
+Source: [Principla Component Analysis: A How-To Manual for R](http://psych.colorado.edu/wiki/lib/exe/fetch.php?media=labs:learnr:emily_-_principal_components_analysis_in_r:pca_how_to.pdf)
+
+####Why Use PCA?
+
+* Reveal hidden structure in a data set
+* Identify how variables work together to create dynamics of a system
+* Filter noise
+* Compress data
+* Decrease redundancy
+
+Example from pdf:
+
+```{r}
+recorders = data.frame("X"=c(0,0,1,1), "Y"=c(0,1,1,0), row.names=c("A","B","C","D"))
+locs = data.frame("X"=c(.3,.5),"Y"=c(.8,.2))
+intensities = data.frame("sine"=sin(0:99*(pi/10))+1.2, "cosine"=.7*cos(0:99*(pi/15))+.9)
+```

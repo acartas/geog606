@@ -1,0 +1,14 @@
+---
+title: "GEOG606: Assignment #2"
+author: "Anika Cartas"
+date: "Monday, March 02, 2015"
+output: word_document
+---
+
+We use R’s built-in dataset, PlantGrowth (you could use help(PlantGrowth) for details about this dataset). There are three groups of plant weight data from an experiment consisting of 2 treatments (trt1 and trt2) and 1 control group (ctr1). Use two testing methods (not limited to the methods covered in class) to test if and how the two treatments are different from the control.
+
+```{r}
+data(PlantGrowth)
+head(PlantGrowth)
+
+```
