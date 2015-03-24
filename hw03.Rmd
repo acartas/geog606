@@ -1,0 +1,60 @@
+---
+title: "GEOG606 - HW03"
+author: "Anika Cartas"
+date: "Tuesday, March 24, 2015"
+output: word_document
+---
+
+### Assignment Description
+
+In 1898, Bumpus did a series study of English sparrows. Attached is his measurement of characteristics of 49 female sparrows:
+  
+  X1=total length
+  X2=alar length,
+  X3=length of beak and head,
+  X4=length of humerus,
+  X5=length of keel and sternum.
+
+Please use principle component analysis to find out the linear combination of 5 variables that best discriminates different sparrows. First, use the PCA routine in R to do it. 
+
+Second, try to reproduce the result of PCA routine by following the key steps of PCA:
+  
+  - generate covariance matrix
+  - solve the eigen value equation to calculate the eigen values
+  - derive eigen vectors
+  - calculate loading vectors
+
+###1. Read in the data
+
+```{r}
+data <- read.table("hw03.csv",header=TRUE, col.names=c("Total","Alar","Beak.Head","Humerus","Keel.Sternum"))
+head(data)
+```
+
+###2. Use PCA routine in R
+
+```{r}
+prcomp.results <- prcomp(data)
+prcomp.results
+
+```
+
+###3. Reproduce results manually
+
+
+```{r}
+#3.1. Generate covariance matrix
+cov.matrix <- cov(data)
+cov.matrix
+
+#3.2 Solve the eigen value equation to calculate the eigen values
+cov.eigen <- eigen(cov.matrix)
+cov.eigen$values
+
+#3.3 Derive eigen vectors
+cov.eigen$vectors
+
+#3.4. Calculate loading vectors
+
+```
+
