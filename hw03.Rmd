@@ -35,26 +35,42 @@ head(data)
 
 ```{r}
 prcomp.results <- prcomp(data)
+
+#Rotation Matrix
 prcomp.results
 
+#Loading Scores
+head(prcomp.results$x)
 ```
 
 ###3. Reproduce results manually
 
 
 ```{r}
-#3.1. Generate covariance matrix
-cov.matrix <- cov(data)
+#3.1 Zero data by subtracting mean 
+data.adjusted <- apply(data,2,function(x) { x - mean(x) }) 
+
+#3.2 Generate covariance matrix
+cov.matrix <- cov(data.adjusted)
 cov.matrix
 
-#3.2 Solve the eigen value equation to calculate the eigen values
+#3.3 Solve the eigen value equation to calculate the eigen values
 cov.eigen <- eigen(cov.matrix)
 cov.eigen$values
 
-#3.3 Derive eigen vectors
+#3.4 Derive eigen vectors
 cov.eigen$vectors
 
-#3.4. Calculate loading vectors
+#3.5 Calculate loading scores
+manual.results <- t(cov.eigen$vectors) %*% t(as.matrix(data.adjusted))
+manual.results <- t(manual.results)
+head(manual.results)
 
+#3.6. Compare Results
+head(prcomp.results$x)
+
+#Calculate differences between each value and see if any are not nearly identical.
+table(abs(manual.results) - abs(prcomp.results$x) < 0.001)
 ```
+
 
