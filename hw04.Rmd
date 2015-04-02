@@ -1,0 +1,58 @@
+---
+title: "GEOG606 - HW04"
+author: "Anika Cartas"
+date: "Monday, March 30, 2015"
+output: html_document
+---
+
+### Assignment Description
+
+A dataset consisting different levels of wetland inundation measurements and spectral values from Landsat and multiple spectral bands is available at ELMS. Use this dataset to:
+ 
+```{r}
+data <- read.csv("WetlandInundation_Landsat.csv")
+
+```
+
+###1. Evaluate the correlations 
+
+Evaluate the correlations between wetland inundation and individual bands and spectral indices
+
+```{r}
+WI.cor <- apply(data[,2:17], 2, function(x) {
+  cor(data$Wetland.Inundation, x, method="pearson")
+})
+
+WI.cor <- sort(WI.cor)
+
+```
+
+###2. Develop stepwise linear regression models 
+
+Develop stepwise linear regression models between inundation and the Landsat data using both forward selection and backward elimination methods. 
+
+```{r}
+#Forward Variable Selection: F-tests
+attach(data)
+
+add1(lm(Wetland.Inundation~1), as.formula(paste("Wetland.Inundation ~", paste(names(data)[2:17],collapse="+"))), test="F")
+
+#Pick minimum AIC as next item to add.
+add1(lm(Wetland.Inundation ~ TCW.TCG), as.formula(paste("Wetland.Inundation ~", paste(names(data)[2:17],collapse="+"))), test="F")
+
+#Only one significant to pick from, IVR
+add1(lm(Wetland.Inundation ~ TCW.TCG + IVR), as.formula(paste("Wetland.Inundation ~", paste(names(data)[2:17],collapse="+"))), test="F")
+
+#Add Band4
+add1(lm(Wetland.Inundation ~ TCW.TCG + IVR + Band4), as.formula(paste("Wetland.Inundation ~", paste(names(data)[2:17],collapse="+"))), test="F")
+
+#Add NDSI
+add1(lm(Wetland.Inundation ~ TCW.TCG + IVR + Band4 + NDSI), as.formula(paste("Wetland.Inundation ~", paste(names(data)[2:17],collapse="+"))), test="F")
+
+#Compare with automatic R version:
+step(lm(Wetland.Inundation ~ 1), as.formula(paste("Wetland.Inundation ~", paste(names(data)[2:17],collapse="+"))), direction="forward")
+
+```
+
+Discuss your variable selection decisions.
+
