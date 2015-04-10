@@ -51,14 +51,14 @@ summary(fit4)
 summary(fit5)
 ```
 
-Depending on how specific we want to get, it looks like we are adding significant variables up to 4th degree, though maybe just 2nd or 3rd is fine. I'm not sure how to decide what the cut-off point is, but based on recommendations am going to continue with 2nd degree polynomial.
+Depending on how specific we want to get, it looks like we are adding significant variables up to 4th degree. I am using the significance levels of each added degree of the variable to determine my cut-off point, because due to overfitting errors the R^2 and RMSE value are not good indicators of which model is best.
 
 ```{r}
 plot(dc~vel, main="Polynomial Regression")
 lines(lowess(dc~vel), col="green")
-reg.poly <- lm(dc ~ poly(vel, 2, raw=TRUE))
-lines(vel, predict(reg.poly),col="darkgreen") 
-
+reg.poly <- lm(dc ~ poly(vel, 4, raw=TRUE))
+pred.poly <- predict(reg.poly)
+lines(vel, pred.poly,col="darkgreen") 
 legend("bottomright", c("Estimate","Modelled"), col=c("green","darkgreen"), lwd=2)
 ```
 
@@ -68,35 +68,92 @@ The Box-Cox Power Transformation identifies an appropriate exponent (lambda) to 
 
 When lambda is plotted against log likelihood, the best lambda is the one that maximizes the log likelihood.
 
-Changed this to be vel ~ dc following advice from article sent out by Danielle, but I'm not sure why it works this way. Originally I had it as dc ~ vel, which led to lambda = 2.
+I am doing this two ways. One in which I use the boxcox method to determine a transformation for the dependent variable, and one in which I transform the independent variable. I will compare their results at the end in the discussion section.
+
+####3.1. Transformation of Independent Variable
 
 ```{r}
 library(MASS)
-bc <-boxcox(vel ~ dc)
+bc.ind <-boxcox(vel ~ dc)
 
-(maxll <- max(bc$y))
-(lambda <- bc$x[which(bc$y == maxll)])
+(maxll <- max(bc.ind$y))
+(lambda <- bc.ind$x[which(bc.ind$y == maxll)])
 ```
 
-Maximum log likelihood of 27.17 is achieved when lamda is equal to -0.75.
+Maximum log likelihood of 27.17 is achieved when lambda is equal to -0.75.
 
 ```{r}
-reg.trans<-lm(dc ~ I(vel^lambda))
-plot(dc ~ I(vel^lambda), main="Transformation Based Regression")
-abline(reg.trans, col="blue")
+reg.ind<-lm(dc ~ I(vel^lambda))
+plot(dc ~ I(vel^lambda), main="Transformation of Independent Variable")
+abline(reg.ind, col="blue")
+```
+
+####3.2. Transformation of Dependent Variable
+
+```{r}
+bc.dep <- boxcox(dc ~ vel)
+(maxll.dep <- max(bc.dep$y))
+(lambda.dep <- bc.dep$x[which(bc.dep$y == maxll.dep)])
+```
+
+Maximum log likelihood of 17.65 is achieved when lambda is equal to 2.
+
+```{r}
+reg.dep<-lm(I(dc^lambda.dep) ~ vel)
+plot(I(dc^lambda.dep) ~ vel, main="Transformation of Dependent Variable")
+abline(reg.dep, col="red")
 ```
 
 ###4. Nonlinear Regression
 
-I will attempt to solve using least squares approach, following directions from Simran's tutorial.
-As of class time, I am unsure of how to determine the model I should be using.
+I will attempt to solve using least squares approach. Visually my best guess is
+dc = a + b*ln(vel). Even though this is linearalizable, I will try to solve it with the nls function.
 
 ```{r}
+init.vals <- getInitial(dc ~ SSlogis(vel,alpha,xmid,scale),data=data)
+reg.nonlinear <- nls(dc ~ a + b*log(vel),start=c(a=init.vals[[2]],b=init.vals[[2]]))
+
+pred.nonlinear <- predict(reg.nonlinear)
+plot(dc ~ vel, main="Nonlinear Regression")
+lines(pred.nonlinear,col="blue")
 ```
+
+These results don't make sense. I am not sure how to work with this function...
 
 ###5. Discussion
 
-Discuss which models are best for this dataset and the physical processes described by your models.
+To determine which model is best, I will calculate the RMSE of observed vs predicted values.
 
 ```{r}
+pred.linear <- predict(reg.linear)
+rmse.linear <- sqrt(mean((dc-pred.linear)^2))
+plot(pred.linear~dc, col="blue",main=sprintf("Linear Regression (RMSE %.03f)",rmse.linear),xlab="Observed",ylab="Linear Prediction")
+lines(dc, dc, col="red")
 ```
+
+```{r}
+rmse.poly <- sqrt(mean((dc-pred.poly)^2))
+plot(pred.poly~dc, col="darkgreen",main=sprintf("Polynomial Regression (RMSE %.03f)",rmse.poly),xlab="Observed",ylab="Polynomial Prediction")
+lines(dc, dc, col="red")
+```
+
+```{r}
+pred.ind <- predict(reg.ind)
+rmse.ind <- sqrt(mean((dc-pred.ind)^2))
+plot(pred.ind ~ dc, col="blue",main=sprintf("Transf. of Ind. (RMSE %.03f)",rmse.ind),xlab="Observed",ylab="Predicted")
+lines(dc,dc,col="red")
+```
+
+```{r}
+pred.dep <- predict(reg.dep)
+rmse.dep <- sqrt(mean((I(dc^lambda.dep)-pred.dep)^2))
+plot(pred.dep ~ I(dc^lambda.dep), col="darkgreen",main=sprintf("Transf. of Dep. (RMSE %.03f)",rmse.dep),xlab="Observed",ylab="Predicted")
+lines(I(dc^lambda.dep),I(dc^lambda.dep),col="red")
+```
+
+```{r}
+(sort(c("Linear"=rmse.linear, "Polynomial"=rmse.poly,"Dependent"=rmse.dep, "Independent"=rmse.ind)))
+```
+Using RMSE as our analysis point, we could determine that the polynomial regression is our best model. However, since polynomial regressions may have a problem of overfitting, we should be wary of using this model to infer anything about unknown data, especially since we know the 4th degree polynomial will dip back down instead of continuing to increase, which is what we would expect given our knowledge about our dataset.
+
+Since the transformation of the Independent Variable is pretty close, I would choose this model.
