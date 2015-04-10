@@ -106,19 +106,28 @@ abline(reg.dep, col="red")
 
 ###4. Nonlinear Regression
 
-I will attempt to solve using least squares approach. Visually my best guess is
-dc = a + b*ln(vel). Even though this is linearalizable, I will try to solve it with the nls function.
+Following advice from Simran, I will investigate the Gompertz Growth Model.
+
+The nls model will allow me to find good values for the parameters. One important thing to note that I was unaware of is that I do not need to supply values for the parameters in the SS... functions, just variable names.
 
 ```{r}
-init.vals <- getInitial(dc ~ SSlogis(vel,alpha,xmid,scale),data=data)
-reg.nonlinear <- nls(dc ~ a + b*log(vel),start=c(a=init.vals[[2]],b=init.vals[[2]]))
+reg.gomp <- nls(dc ~ SSgompertz(vel, Asym, b2, b3))
+pred.gomp <- predict(reg.gomp)
 
-pred.nonlinear <- predict(reg.nonlinear)
-plot(dc ~ vel, main="Nonlinear Regression")
-lines(pred.nonlinear,col="blue")
+plot(dc ~ vel, main="Nonlinear Regression (Gompertz)")
+lines(vel,pred.gomp,col="red")
+
 ```
 
-These results don't make sense. I am not sure how to work with this function...
+I will also try the Logistic Model.
+
+```{r}
+reg.log <- nls(dc ~ SSlogis(vel, Asym, xmid, scal))
+pred.log <- predict(reg.log)
+
+plot(dc ~ vel, main="Nonlinear Regression (Logistic)")
+lines(vel,pred.log,col="blue")
+```
 
 ###5. Discussion
 
@@ -152,7 +161,19 @@ lines(I(dc^lambda.dep),I(dc^lambda.dep),col="red")
 ```
 
 ```{r}
-(sort(c("Linear"=rmse.linear, "Polynomial"=rmse.poly,"Dependent"=rmse.dep, "Independent"=rmse.ind)))
+rmse.gomp <- sqrt(mean((dc-pred.gomp)^2))
+plot(pred.gomp ~ dc, col="blue",main=sprintf("Nonlinear - Gompertz (RMSE %.03f)",rmse.gomp),xlab="Observed",ylab="Predicted")
+lines(dc,dc,col="red")
+```
+
+```{r}
+rmse.log <- sqrt(mean((dc-pred.log)^2))
+plot(pred.log ~ dc, col="darkgreen",main=sprintf("Nonlinear - Logistic (RMSE %.03f)",rmse.log),xlab="Observed",ylab="Predicted")
+lines(dc,dc,col="red")
+```
+
+```{r}
+(sort(c("Linear"=rmse.linear, "Polynomial"=rmse.poly,"Transf. DC"=rmse.dep, "Transf. Vel"=rmse.ind, "Gompertz"= rmse.gomp, "Logistic"=rmse.log)))
 ```
 Using RMSE as our analysis point, we could determine that the polynomial regression is our best model. However, since polynomial regressions may have a problem of overfitting, we should be wary of using this model to infer anything about unknown data, especially since we know the 4th degree polynomial will dip back down instead of continuing to increase, which is what we would expect given our knowledge about our dataset.
 
