@@ -8,41 +8,49 @@ output: html_document
 1. Determine how many samples are needed to control the estimation error within 20%, 10%, and 5% of the total biomass
 
 ```{r}
-N <- 400 * 200 #number of pixels
+#install.packages("raster")
+library(raster)
 
-#Calculate number of samples needed for estimation error = 20%, 10%, 5%
-#These numbers are made up. Gibberish.
-n.20 <- 2000
-n.10 <- 10 
-n.5  <- 5
+truth <- raster("class_project/Class_Project_NC_biomass")
+
+N <- ncol(truth) * nrow(truth)
+sd <- sd(truth[1:N])
+mean <- mean(truth[1:N])
+CV <- sd/mean #slide 7, bullet point 2, Prof. Huang said this is it.
+
+#This formula is from end of slide 7, lecture 11. 
+get_sample_size <- function(AE, N, CV){ 
+  n <-  (4*N*CV^2) / (N*AE^2 + 4*CV^2) 
+}
+
+n.20 <- get_sample_size(0.2,N,CV)
+n.10 <- get_sample_size(0.1,N,CV)
+n.5  <- get_sample_size(0.05,N,CV)
 ```
 
 2. Select pixels from the reference biomass map and use them to estimate the total biomass and its standard error
 
-Once we know how many samples to take, we can use raster library to randomly sample from our files. Since our files are relatively small (200 x 400), this is ok to do in R.
+Once we know how many samples to take, we can use raster library to randomly sample from our files. 
 ```{r}
-#install.packages("raster")
-library(raster)
-
-truth <- raster("Class_Project_NC_biomass")
-plot(truth, main="Biomass (Mg/ha)")
-
-height <- stack("Class_Project_NC_lidar_profiles10") #stores all 10 bands
+height <- stack("class_project/Class_Project_NC_lidar_profiles10") #stores all 10 bands
 
 #FYI, you can access each rasterLayer in the rasterStack individually.
 #h.10 <- height@layers[[1]] #first of 10 bands, etc.
 #plot(h.10, main="Lidar Profiles 1")
 
-#Get cell number of our samples (this way we can associate with height)
-samp.20 <- sample(N,n.20)
-samp.10 <- sample(N,n.10)
-samp.5 <- sample(N,n.5)
+get_sample_data <- function(n){
+  samp <- sample(N,n)     #Cell number of our samples
+  bio <- truth[samp]      #Values at each sample cell
+  hgt <- height[samp]
+  data <- as.data.frame(cbind(bio,hgt))
+  colnames(data) <- c("Biomass","H1","H2","H3","H4","H5","H6","H7","H8","H9","H10")
 
-#Get values at each n
-bio.20 <- truth[samp.20]
-height.20 <- height[samp.20]
-data.20 <- as.data.frame(cbind(bio.20,height.20))
-colnames(data.20) <- c("Biomass","H1","H2","H3","H4","H5","H6","H7","H8","H9","H10")
+  data #return the df
+}
+
+data.5 <- get_sample_data(n.5)
+data.10 <- get_sample_data(n.10)
+data.20 <- get_sample_data(n.20)
 
 ```
 
@@ -52,45 +60,60 @@ Model group 1: Use the samples selected to derive sample based estimates with a 
 
 Below is a demo assuming we found the right number for 20% error (n.20)
 ```{r}
-attach(data.20)
-
-lm1 <- step(lm(Biomass ~ 1), as.formula(Biomass ~ H1+H2+H3+H4+H5+H6+H7+H8+H9+H10), direction="forward")
-
-lm1 #This only creates Biomass ~ H4 (for n=2000). Not sure if that's ok?
-
+attach(data.20) #Not sure how to do this without attach/detach
+lm.20 <- step(lm(Biomass ~ 1), as.formula(Biomass ~ H1+H2+H3+H4+H5+H6+H7+H8+H9+H10), direction="forward")
+lm.20
 detach(data.20)
+
+attach(data.10) #Not sure how to do this without attach/detach
+lm.10 <- step(lm(Biomass ~ 1), as.formula(Biomass ~ H1+H2+H3+H4+H5+H6+H7+H8+H9+H10), direction="forward")
+lm.10
+detach(data.10)
+
+attach(data.5) #Not sure how to do this without attach/detach
+lm.5 <- step(lm(Biomass ~ 1), as.formula(Biomass ~ H1+H2+H3+H4+H5+H6+H7+H8+H9+H10), direction="forward")
+lm.5
+detach(data.5)
+
 ```
 
 Model group 2: Randomly draw 2 curves across the study area as two faked roads. Use samples along the roads to build your model
 
 ```{r}
-plot(truth,main="Biomass (Mg/ha)")
 
-#Using sin/cos functions to draw roads.
+sample_road <-function(n,plot=F){
+  if(plot==T){
+    plot(truth,main="Biomass (Mg/ha)")
+    curve(5000*sin(0.0001*x)+620000,from=848171,to=887541,add=T,n=2000) #Road 1
+    curve(3000*cos(0.0001*x)+625000,from=848171,to=887541,add=T,n=2000) #Road 2
+  }
+  
+  #For AE = 20%
+  samp.road.x <- sample(c(848171:887541),n) #get x values to sample at.
+  samp.road.y <- sapply(samp.road.x, function(x){
+    if (rbinom(1,1,0.5) == 0) #Coin flip which road we use
+      y <- 5000*sin(0.0001*x)+620000
+    else
+      y <- 3000*cos(0.0001*x)+625000
+    }) #matching y values
+  
+  if (plot==T){
+    points(x=samp.road.x,y=samp.road.y,col="blue")
+  }
 
-samp.road1.x <- sample(c(850000:885000),n.20) #get x values to sample at.
-samp.road1.y <- sapply(samp.road1.x, function(x){5000*sin(0.0001*x)+620000}) #matching y values
-curve(5000*sin(0.0001*x)+620000,from=850000,to=885000,add=T,n=2000)
-points(x=samp.road1.x,y=samp.road1.y,col="red")
-samp.road1 <- cbind(x=samp.road1.x,y=samp.road1.y)
+  samp.road <- cbind(x=samp.road.x,y=samp.road.y)
 
-#Use extract function to get values at given x/y
-bio.road1 <- extract(truth,samp.road1)
-height.road1 <- extract(height,samp.road1)
-data.road1 <- as.data.frame(cbind(bio.road1,height.road1))
-colnames(data.road1) <- c("Biomass","H1","H2","H3","H4","H5","H6","H7","H8","H9","H10")
+  #Use extract function to get values at given x/y
+  bio.road <- extract(truth,samp.road)
+  height.road <- extract(height,samp.road)
+  data.road <- as.data.frame(cbind(bio.road,height.road))
+  colnames(data.road) <- c("Biomass","H1","H2","H3","H4","H5","H6","H7","H8","H9","H10")
 
+  data.road
+}
 
-samp.road2.x <- sample(c(848171:870000),n.20)
-samp.road2.y <- sapply(samp.road2.x, function(x){8000*cos(0.0001*x)+625000})
-curve(8000*cos(0.0001*x)+625000,from=848171,to=870000,add=T,n=2000,col="brown")
-points(x=samp.road2.x,y=samp.road2.y,col="brown")
-
-bio.road2 <- extract(truth,samp.road2)
-height.road2 <- extract(height,samp.road2)
-data.road2 <- as.data.frame(cbind(bio.road2,height.road2))
-colnames(data.road2) <- c("Biomass","H1","H2","H3","H4","H5","H6","H7","H8","H9","H10")
-
+data.road.5 <- sample_road(n.5,plot=T)
+data.road.20 <- sample_road(n.20,plot=T)
 
 ```
 
@@ -103,4 +126,8 @@ Comparing the biomass estimates derived using different methods against the “t
 ```{r}
 
 (biomass.truth <- sum(truth[1:80000])) #Total biomass of truth.
+#biomass.srs.20 <- 
+#biomas.srs.5 <- 
+#biomass.road.20 <- 
+#biomass.road.5 <- 
 ```
