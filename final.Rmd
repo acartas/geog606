@@ -7,15 +7,92 @@ output: html_document
 
 ```{r read_data}
 library(ggplot2)
-data <- read.csv("results_v3.csv")
+data <- read.csv("results_v4.csv")
+#write.csv(data,"results_v4.csv")
 ```
 
-**1. Summary Statistics on FRBWidth**
+**Calculate FRBWidth.State**
+
+Two windows in a row need to be non-forest to be cut-off.
+
+```{r, echo=FALSE, eval=FALSE}
+TIDS <- unique(data$TransectID)
+for (id in TIDS){
+  sub <- data[data$TransectID == id,]
+  FRBWidth <- 0
+  done <- FALSE
+  
+  while (!done & FRBWidth < 200){
+    if (sub[sub$Distance == FRBWidth + 10,"LU"] == 40){
+      FRBWidth <- FRBWidth + 10
+    } 
+    else 
+      if (FRBWidth < 190 && sub[sub$Distance == FRBWidth + 20,"LU"] == 40){
+        FRBWidth <- FRBWidth + 20
+      } 
+      else {
+        done <- TRUE
+      }
+  }
+  
+  data[data$TransectID == id,"FRBWidth.State"] <- FRBWidth
+  cat("TID",id,"",FRBWidth,"\n")
+
+}
+write.csv(data,"results_v4.csv")
+
+```
+
+**Recalculate FRBWidth.Lidar**
+
+Two windows in a row (20m) need to be <30% in order to cut off the FRB.
+
+```{r, echo=FALSE,eval=FALSE}
+#Don't run again.
+TIDS <- unique(data$TransectID)
+for (id in TIDS){
+  sub <- data[data$TransectID == id,]
+  addDist <- 10
+  FRBWidth <- sub$FRBWidth.Lidar[1]
+  
+  done <- FALSE
+  
+  while (!done && FRBWidth < 190){
+    cur <- sub[sub$Distance == FRBWidth + 10,]
+    nex <- sub[sub$Distance == FRBWidth + 20,]
+    
+    if (nex$Cover >= 0.3){
+      FRBWidth <- FRBWidth + 20
+    }
+    else {
+      done <- TRUE
+    }
+  }
+  
+  data[data$TransectID == id,"FRBWidth.Lidar"] <- FRBWidth
+  if (FRBWidth != sub$FRBWidth.Lidar[1]){
+    cat("TID",id,"Old",sub$FRBWidth.Lidar[1],"New",FRBWidth,"\n")
+  }
+}
+write.csv(data,"results_v4.csv")
+
+```
+
+**1. Summary Statistics on FRBWidth Lidar/State**
 
 ```{r}
 t.first <- data[data$Id == 1, ]
-(FRBWidth.mean <- mean(t.first$FRBWidth))
-hist(t.first$FRBWidth, probability=TRUE, breaks=20, main="Histogram of FRBWidth",xlab="FRBWidth")
+FRBWidth.Lidar.mean <- mean(t.first$FRBWidth.Lidar)
+FRBWidth.State.mean <- mean(t.first$FRBWidth.State)
+
+cat("===FRBWidth===\nMean:\n\tLidar:",FRBWidth.Lidar.mean,"\n\tState:",FRBWidth.State.mean,
+    "\nSD:\n\tLidar:",sd(t.first$FRBWidth.Lidar),"\n\tState:",sd(t.first$FRBWidth.State),
+    "\nVar:\n\tLidar:",var(t.first$FRBWidth.Lidar),"\n\tState:",var(t.first$FRBWidth.State),"\n")
+
+hist(t.first$FRBWidth.Lidar, probability=TRUE, breaks=seq(-10,200,10), main="Histogram of FRBWidth",xlab="FRBWidth",ylim=c(0,0.035),col=rgb(1,0,0,0.25))
+hist(t.first$FRBWidth.State, probability=TRUE, breaks=seq(-10,200,10), add=T, col=rgb(0,0,1,0.25))
+
+legend("top",c("Lidar","State"),col=c(rgb(1,0,0,0.5),rgb(0,0,1,0.5)),lwd=c(2.5,2.5))
 ```
 
 **2a. FRBWidth based on immediately following land-use.**
@@ -24,22 +101,22 @@ Probably not the best method. Should check more directly on ratio of following s
 
 ```{r}
 #Followed by Agriculture: Distance = FRBWidth + 10 AND LU = 20
-t.ag <- data[data$Distance == (data$FRBWidth+10) & data$LU == 20, ]
-t.ag.mean <- mean(t.ag$FRBWidth)
-t.ag.sd <- sd(t.ag$FRBWidth)
-t.ag.var <- var(t.ag$FRBWidth)
+t.ag <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 20, ]
+t.ag.mean <- mean(t.ag$FRBWidth.State)
+t.ag.sd <- sd(t.ag$FRBWidth.State)
+t.ag.var <- var(t.ag$FRBWidth.State)
 
 #Followed by Developed
-t.dev <- data[data$Distance == (data$FRBWidth+10) & data$LU == 10, ]
-t.dev.mean <- mean(t.dev$FRBWidth)
-t.dev.sd <- sd(t.dev$FRBWidth)
-t.dev.var <- var(t.dev$FRBWidth)
+t.dev <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 10, ]
+t.dev.mean <- mean(t.dev$FRBWidth.State)
+t.dev.sd <- sd(t.dev$FRBWidth.State)
+t.dev.var <- var(t.dev$FRBWidth.State)
 
 #Followed by Forest
-t.for <- data[data$Distance == (data$FRBWidth+10) & data$LU == 40, ]
-t.for.mean <- mean(t.for$FRBWidth)
-t.for.sd <- sd(t.for$FRBWidth)
-t.for.var <- var(t.for$FRBWidth)
+t.for <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 40, ]
+t.for.mean <- mean(t.for$FRBWidth.State)
+t.for.sd <- sd(t.for$FRBWidth.State)
+t.for.var <- var(t.for$FRBWidth.State)
 ```
 ```{r, echo=FALSE}
 cat("Immediately by Ag:\n\tMean =",t.ag.mean,"\n\tSD =",t.ag.sd,"\n\tVar =",t.ag.var)
@@ -51,17 +128,17 @@ cat("Immediately by Forest:\n\tMean =",t.for.mean,"\n\tSD =",t.for.sd,"\n\tVar =
 
 ```{r, echo=FALSE}
 par(mfrow=c(2,2))
-hist(t.first$FRBWidth,  col=rgb(0.8,0.8,0.8),probability=TRUE, breaks=20, main="All Transects",xlab="FRBWidth",ylim=c(0,0.05),xlim=c(0,200))
-hist(t.ag$FRBWidth, col=rgb(1,1,.7), probability=TRUE,breaks=20,main="Immediately by Ag",xlab="FRBWidth",ylim=c(0,0.05),xlim=c(0,200))
-hist(t.dev$FRBWidth, col=rgb(1,192/255,203/255), probability=TRUE,breaks=20,main="Immediately by Dev",xlab="FRBWidth",ylim=c(0,0.05),xlim=c(0,200))
-hist(t.for$FRBWidth, col=rgb(60/255,179/255,113/255), probability=TRUE,breaks=20,main="Immediately by Forest",xlab="FRBWidth",ylim=c(0,0.05),xlim=c(0,200))
+hist(t.first$FRBWidth.Lidar,  col=rgb(0.8,0.8,0.8),probability=TRUE, breaks=20, main="All Transects",xlab="FRBWidth",ylim=c(0,0.02),xlim=c(0,200))
+hist(t.ag$FRBWidth.Lidar, col=rgb(1,1,.7), probability=TRUE,breaks=20,main="Immediately by Ag",xlab="FRBWidth",ylim=c(0,0.02),xlim=c(0,200))
+hist(t.dev$FRBWidth.Lidar, col=rgb(1,192/255,203/255), probability=TRUE,breaks=20,main="Immediately by Dev",xlab="FRBWidth",ylim=c(0,0.02),xlim=c(0,200))
+hist(t.for$FRBWidth.Lidar, col=rgb(60/255,179/255,113/255), probability=TRUE,breaks=20,main="Immediately by Forest",xlab="FRBWidth",ylim=c(0,0.02),xlim=c(0,200))
 ```
 
 **2b. Comparing FRB of most frequent following LU**
 
 
 ```{r,eval=FALSE, echo=FALSE}
-#Don't run this again, I had to make 3 manual adjustments for -110,140,213 to pick the best fit for nextLU
+#Don't run this again, I had to make 3 manual adjustments for 104 to pick the best fit for nextLU
 
 #For each transect id
   #Check LU of all with Dist > FRBWidth
@@ -111,7 +188,7 @@ for (id in unique(data$TransectID)){
   
 }
 
-write.csv(data,"results_v3.csv")
+write.csv(data,"results_v4.csv")
 ```
 
 ```{r,echo=FALSE}
