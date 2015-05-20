@@ -95,137 +95,102 @@ hist(t.first$FRBWidth.State, probability=TRUE, breaks=seq(-10,200,10), add=T, co
 legend("top",c("Lidar","State"),col=c(rgb(1,0,0,0.5),rgb(0,0,1,0.5)),lwd=c(2.5,2.5))
 ```
 
-**2a. FRBWidth based on immediately following land-use.**
-
-Probably not the best method. Should check more directly on ratio of following stuff.
+**2a. FRBWidth.State based on immediately following land-use.**
 
 ```{r}
 #Followed by Agriculture: Distance = FRBWidth + 10 AND LU = 20
-t.ag <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 20, ]
-t.ag.mean <- mean(t.ag$FRBWidth.State)
-t.ag.sd <- sd(t.ag$FRBWidth.State)
-t.ag.var <- var(t.ag$FRBWidth.State)
+s.ag <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 20, ]
+s.ag.mean <- mean(s.ag$FRBWidth.State)
+s.ag.sd <- sd(s.ag$FRBWidth.State)
+s.ag.var <- var(s.ag$FRBWidth.State)
 
 #Followed by Developed
-t.dev <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 10, ]
-t.dev.mean <- mean(t.dev$FRBWidth.State)
-t.dev.sd <- sd(t.dev$FRBWidth.State)
-t.dev.var <- var(t.dev$FRBWidth.State)
+s.dev <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 10, ]
+s.dev.mean <- mean(s.dev$FRBWidth.State)
+s.dev.sd <- sd(s.dev$FRBWidth.State)
+s.dev.var <- var(s.dev$FRBWidth.State)
 
 #Followed by Forest
-t.for <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 40, ]
-t.for.mean <- mean(t.for$FRBWidth.State)
-t.for.sd <- sd(t.for$FRBWidth.State)
-t.for.var <- var(t.for$FRBWidth.State)
-```
-```{r, echo=FALSE}
-cat("Immediately by Ag:\n\tMean =",t.ag.mean,"\n\tSD =",t.ag.sd,"\n\tVar =",t.ag.var)
-cat("Immediately by Dev:\n\tMean =",t.dev.mean,"\n\tSD =",t.dev.sd,"\n\tVar =",t.dev.var)
-cat("Immediately by Forest:\n\tMean =",t.for.mean,"\n\tSD =",t.for.sd,"\n\tVar =",t.for.var)
-```
+s.for <- data[data$Distance == (data$FRBWidth.State+10) & data$LU == 40, ]
+s.for.mean <- mean(s.for$FRBWidth.State)
+s.for.sd <- sd(s.for$FRBWidth.State)
+s.for.var <- var(s.for$FRBWidth.State)
 
-**Comparing Histograms**
-
-```{r, echo=FALSE}
-par(mfrow=c(2,2))
-hist(t.first$FRBWidth.Lidar,  col=rgb(0.8,0.8,0.8),probability=TRUE, breaks=20, main="All Transects",xlab="FRBWidth",ylim=c(0,0.02),xlim=c(0,200))
-hist(t.ag$FRBWidth.Lidar, col=rgb(1,1,.7), probability=TRUE,breaks=20,main="Immediately by Ag",xlab="FRBWidth",ylim=c(0,0.02),xlim=c(0,200))
-hist(t.dev$FRBWidth.Lidar, col=rgb(1,192/255,203/255), probability=TRUE,breaks=20,main="Immediately by Dev",xlab="FRBWidth",ylim=c(0,0.02),xlim=c(0,200))
-hist(t.for$FRBWidth.Lidar, col=rgb(60/255,179/255,113/255), probability=TRUE,breaks=20,main="Immediately by Forest",xlab="FRBWidth",ylim=c(0,0.02),xlim=c(0,200))
+cat("State - Ag Next:\n\tMean =",s.ag.mean,"\n\tSD =",s.ag.sd,"\n\tVar =",s.ag.var)
+cat("State - Dev Next:\n\tMean =",s.dev.mean,"\n\tSD =",s.dev.sd,"\n\tVar =",s.dev.var)
+cat("State - Forest Next:\n\tMean =",s.for.mean,"\n\tSD =",s.for.sd,"\n\tVar =",s.for.var)
 ```
 
-**2b. Comparing FRB of most frequent following LU**
+**2b. FRBWidth.Lidar based on immediately following land-use.**
 
-
-```{r,eval=FALSE, echo=FALSE}
-#Don't run this again, I had to make 3 manual adjustments for 104 to pick the best fit for nextLU
-
-#For each transect id
-  #Check LU of all with Dist > FRBWidth
-  #Find median value
-  #Assign as Frequent-Follower for whole id.
-
-data$Next.LU.Alt <- NA
-
-Mode <- function(x) {
-  ux <- unique(x)
-  tab <- tabulate(match(x, ux)); ux[tab == max(tab)]
-}
-
-getNextLU <- function(id){
-  #Test on subset
-  sub <- data[data$TransectID == id,]
-  past <- sub[sub$Distance > sub$FRBWidth,]
-  if (nrow(past) > 0){
-    nextLU <- Mode(past$LU)  
-  }
-  else{
-    nextLU <- NA
-  }
-  
-  nextLU #return value
-
-}
-
-for (id in unique(data$TransectID)){
-  nextLU <- getNextLU(id)
-  if (length(nextLU) > 1){
-    if (nextLU[1] == 40){
-      data[data$TransectID == id,"Next.LU"] <- nextLU[2]
-      data[data$TransectID == id,"Next.LU.Alt"] <- nextLU[1]    
-    }
-    else if (nextLU[2] == 40){
-      data[data$TransectID == id,"Next.LU"] <- nextLU[1]
-      data[data$TransectID == id,"Next.LU.Alt"] <- nextLU[2]          
-    }
-    else {
-      cat("TID",id,"choose a mode",nextLU,"\n")      
-    }
-  }
-  else{
-    data[data$TransectID == id,"Next.LU"] <- nextLU
-  }
-  
-}
-
-write.csv(data,"results_v4.csv")
-```
-
-```{r,echo=FALSE}
+```{r}
 #Followed by Agriculture: Distance = FRBWidth + 10 AND LU = 20
-t.ag <- data[data$Distance == (data$FRBWidth+10) & data$Next.LU == 20 & !is.na(data$Next.LU), ]
-t.ag.mean <- mean(t.ag$FRBWidth)
-t.ag.sd <- sd(t.ag$FRBWidth)
-t.ag.var <- var(t.ag$FRBWidth)
+l.ag <- data[data$Distance == (data$FRBWidth.Lidar+10) & data$LU == 20, ]
+l.ag.mean <- mean(l.ag$FRBWidth.Lidar)
+l.ag.sd <- sd(l.ag$FRBWidth.Lidar)
+l.ag.var <- var(l.ag$FRBWidth.Lidar)
 
 #Followed by Developed
-t.dev <- data[data$Distance == (data$FRBWidth+10) & data$Next.LU == 10 & !is.na(data$Next.LU), ]
-t.dev.mean <- mean(t.dev$FRBWidth)
-t.dev.sd <- sd(t.dev$FRBWidth)
-t.dev.var <- var(t.dev$FRBWidth)
+l.dev <- data[data$Distance == (data$FRBWidth.Lidar+10) & data$LU == 10, ]
+l.dev.mean <- mean(l.dev$FRBWidth.Lidar)
+l.dev.sd <- sd(l.dev$FRBWidth.Lidar)
+l.dev.var <- var(l.dev$FRBWidth.Lidar)
 
 #Followed by Forest
-t.for <- data[data$Distance == (data$FRBWidth+10) & data$Next.LU == 40 & !is.na(data$Next.LU), ]
-t.for.mean <- mean(t.for$FRBWidth)
-t.for.sd <- sd(t.for$FRBWidth)
-t.for.var <- var(t.for$FRBWidth)
+l.for <- data[data$Distance == (data$FRBWidth.Lidar+10) & data$LU == 40, ]
+l.for.mean <- mean(l.for$FRBWidth.Lidar)
+l.for.sd <- sd(l.for$FRBWidth.Lidar)
+l.for.var <- var(l.for$FRBWidth.Lidar)
+
+cat("Lidar - Ag Next:\n\tMean =",l.ag.mean,"\n\tSD =",l.ag.sd,"\n\tVar =",l.ag.var)
+cat("Lidar - Dev Next:\n\tMean =",l.dev.mean,"\n\tSD =",l.dev.sd,"\n\tVar =",l.dev.var)
+cat("Lidar - Forest Next:\n\tMean =",l.for.mean,"\n\tSD =",l.for.sd,"\n\tVar =",l.for.var)
 ```
 
-```{r, echo=FALSE}
-cat("Followed by Ag:\n\tMean =",t.ag.mean,"\n\tSD =",t.ag.sd,"\n\tVar =",t.ag.var)
-cat("Followed by Dev:\n\tMean =",t.dev.mean,"\n\tSD =",t.dev.sd,"\n\tVar =",t.dev.var)
-cat("Followed by Forest:\n\tMean =",t.for.mean,"\n\tSD =",t.for.sd,"\n\tVar =",t.for.var)
-```
+**Comparing Lidar Dev/Ag/Forest**
 
-**Comparing Histograms**
+```{r}
+col.ag <- rgb(1,1,.7)
+col.dev <- rgb(1,192/255,203/255)
+col.for <- rgb(60/255,179/255,113/255)
 
-```{r, echo=FALSE}
 par(mfrow=c(2,2))
-hist(t.first$FRBWidth,  col=rgb(0.8,0.8,0.8),probability=TRUE, breaks=20, main="All Transects",xlab="FRBWidth",ylim=c(0,0.05),xlim=c(0,200))
-hist(t.ag$FRBWidth, col=rgb(1,1,.7), probability=TRUE,breaks=20,main="Followed by Ag",xlab="FRBWidth",ylim=c(0,0.05),xlim=c(0,200))
-hist(t.dev$FRBWidth, col=rgb(1,192/255,203/255), probability=TRUE,breaks=20,main="Followed by Dev",xlab="FRBWidth",ylim=c(0,0.05),xlim=c(0,200))
-hist(t.for$FRBWidth, col=rgb(60/255,179/255,113/255), probability=TRUE,breaks=20,main="Followed by Forest",xlab="FRBWidth",ylim=c(0,0.05),xlim=c(0,200))
+
+hist(l.ag$FRBWidth.Lidar, col=col.ag, breaks=seq(-10,200,10),main="Adjacent to Agriculture",xlab="FRBWidth.Lidar",xlim=c(0,200),ylim=c(0,80))
+hist(l.dev$FRBWidth.Lidar, col=col.dev, breaks=seq(-10,200,10),main="Adjacent to Dev",xlab="FRBWidth.Lidar",xlim=c(0,200),ylim=c(0,80))
+hist(l.for$FRBWidth.Lidar, col=col.for, breaks=seq(-10,200,10),main="Adjacent to Forest",xlab="FRBWidth.Lidar",xlim=c(0,200),ylim=c(0,80))
 ```
+
+**Comparing State Dev/Ag**
+
+```{r}
+par(mfrow=c(2,2))
+
+hist(s.ag$FRBWidth.State, col=col.ag, probability=TRUE,breaks=seq(-10,200,10),main="Adjacent to Agriculture",xlab="FRBWidth.State",ylim=c(0,0.04),xlim=c(0,200))
+hist(s.dev$FRBWidth.State, col=col.dev, probability=TRUE,breaks=seq(-10,200,10),main="Adjacent to Dev",xlab="FRBWidth.State",ylim=c(0,0.04),xlim=c(0,200))
+```
+
+
+**Comparing Agriculture Histograms**
+
+```{r, echo=FALSE}
+hist(l.ag$FRBWidth.Lidar, probability=TRUE, breaks=seq(-10,200,10), main="Adjacent to Agriculture",xlab="FRBWidth",ylim=c(0,0.035),col=rgb(1,0,0,0.25))
+hist(s.ag$FRBWidth.State, probability=TRUE, breaks=seq(-10,200,10), add=T, col=rgb(0,0,1,0.25))
+
+legend("top",c("Lidar","State"),col=c(rgb(1,0,0,0.5),rgb(0,0,1,0.5)),lwd=c(2.5,2.5))
+
+```
+
+**Comparing Developed Histograms**
+
+```{r, echo=FALSE}
+hist(l.dev$FRBWidth.Lidar, probability=TRUE, breaks=seq(-10,200,10), main="Adjacent to Developed",xlab="FRBWidth",ylim=c(0,0.04),col=rgb(1,0,0,0.25))
+hist(s.dev$FRBWidth.State, probability=TRUE, breaks=seq(-10,200,10), add=T, col=rgb(0,0,1,0.25))
+
+legend("top",c("Lidar","State"),col=c(rgb(1,0,0,0.5),rgb(0,0,1,0.5)),lwd=c(2.5,2.5))
+
+```
+
 
 **3. Height Statistics based on FRBWidth**
 
